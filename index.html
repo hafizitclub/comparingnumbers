@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparing & Ordering Numbers</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple-light: #EEEDFE;
+    --purple-mid: #AFA9EC;
+    --purple: #7F77DD;
+    --purple-dark: #534AB7;
+    --purple-darker: #3C3489;
+    --teal-light: #E1F5EE;
+    --teal: #1D9E75;
+    --teal-dark: #0F6E56;
+    --red-light: #FCEBEB;
+    --red: #E24B4A;
+    --red-dark: #A32D2D;
+    --amber-light: #FAEEDA;
+    --amber: #BA7517;
+    --bg: #F7F6FF;
+    --card: #FFFFFF;
+    --text: #2C2860;
+    --text-muted: #7872B8;
+    --border: #D4D1F5;
+  }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 3rem;
+  }
+
+  /* Decorative background blobs */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -120px; left: -120px;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #CEC BF633%, transparent 70%);
+    background: radial-gradient(circle, #D4D1F5 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -80px; right: -80px;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #9FE1CB 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .wrapper {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 520px;
+  }
+
+  /* Header */
+  .page-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .page-header .badge {
+    display: inline-block;
+    background: var(--purple-dark);
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+  }
+  .page-header h1 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .page-header p {
+    margin-top: 6px;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .progress-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--purple-dark);
+    white-space: nowrap;
+  }
+  .progress-bar-bg {
+    flex: 1;
+    height: 8px;
+    border-radius: 8px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--purple), var(--teal));
+    transition: width .4s ease;
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    padding: 1.5rem 1.25rem;
+    box-shadow: 0 4px 24px rgba(83,74,183,.07);
+  }
+
+  /* Number bank */
+  .section-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 10px;
+  }
+  .number-bank {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-height: 64px;
+    background: var(--bg);
+    border: 1.5px dashed var(--border);
+    border-radius: 14px;
+    padding: 10px;
+    margin-bottom: 1.5rem;
+    align-items: center;
+  }
+
+  /* Number cards */
+  .num-card {
+    width: 58px; height: 58px;
+    border-radius: 14px;
+    border: 2px solid var(--purple-mid);
+    background: var(--purple-light);
+    color: var(--purple-darker);
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    user-select: none;
+    transition: transform .15s, box-shadow .15s, opacity .2s;
+    touch-action: none;
+  }
+  .num-card:active { cursor: grabbing; transform: scale(1.1); box-shadow: 0 6px 20px rgba(83,74,183,.2); }
+  .num-card.dragging { opacity: .3; }
+  .num-card.used { cursor: grab; }
+
+  /* Parts */
+  .part { margin-bottom: 1.25rem; }
+  .part-label {
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .part-label .letter {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--purple-dark);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .drop-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .drop-slot {
+    width: 58px; height: 58px;
+    border-radius: 14px;
+    border: 2px dashed var(--border);
+    background: #FAFAFE;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    position: relative;
+    transition: border-color .15s, background .15s, transform .1s;
+  }
+  .drop-slot.over {
+    border-color: var(--purple);
+    background: var(--purple-light);
+    transform: scale(1.05);
+  }
+  .drop-slot.correct {
+    border: 2px solid var(--teal);
+    background: var(--teal-light);
+    color: var(--teal-dark);
+  }
+  .drop-slot.wrong {
+    border: 2px solid var(--red);
+    background: var(--red-light);
+    color: var(--red-dark);
+    animation: shake .3s ease;
+  }
+  @keyframes shake {
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-4px);}
+    75%{transform:translateX(4px);}
+  }
+
+  .remove-btn {
+    position: absolute;
+    top: -8px; right: -8px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    border: 2px solid #fff;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 2;
+  }
+  .drop-slot:hover .remove-btn { display: flex; }
+
+  .row-hint {
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    align-self: center;
+  }
+
+  .comma {
+    font-size: 22px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    color: var(--text-muted);
+    align-self: center;
+    margin: 0 -2px;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+  }
+  .btn {
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform .1s, box-shadow .1s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-check {
+    background: var(--purple-dark);
+    color: #fff;
+    border-color: var(--purple-dark);
+    box-shadow: 0 4px 14px rgba(83,74,183,.25);
+  }
+  .btn-check:hover { background: var(--purple-darker); box-shadow: 0 6px 18px rgba(83,74,183,.3); }
+  .btn-next {
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    border-color: var(--teal);
+    display: none;
+  }
+  .btn-next:hover { background: #c5ede1; }
+  .btn-retry {
+    background: var(--amber-light);
+    color: var(--amber);
+    border-color: #e0a840;
+    display: none;
+  }
+  .btn-retry:hover { background: #f5e3c0; }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    min-height: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feedback.ok { color: var(--teal-dark); }
+  .feedback.err { color: var(--red-dark); }
+
+  /* Stars celebration */
+  .stars {
+    display: inline-flex;
+    gap: 2px;
+    font-size: 18px;
+  }
+
+  /* Score summary */
+  .score-card {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  .score-card .big-num {
+    font-family: 'Nunito', sans-serif;
+    font-size: 64px;
+    font-weight: 800;
+    color: var(--purple-dark);
+    line-height: 1;
+  }
+  .score-card .sub {
+    font-size: 16px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .score-card .restart-btn {
+    margin-top: 1.5rem;
+    padding: 12px 32px;
+    border-radius: 14px;
+    background: var(--purple-dark);
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(83,74,183,.25);
+    transition: background .15s;
+  }
+  .score-card .restart-btn:hover { background: var(--purple-darker); }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="page-header">
+    <div class="badge">Practice 8</div>
+    <h1>Comparing &amp; Ordering Numbers</h1>
+    <p>Drag the numbers into the correct boxes.</p>
+  </div>
+
+  <div class="progress-wrap">
+    <span class="progress-label" id="progress-label">Round 1 of 8</span>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill" style="width:12.5%"></div>
+    </div>
+  </div>
+
+  <div class="card" id="main-card">
+    <div class="section-label">Your numbers</div>
+    <div class="number-bank" id="number-bank"></div>
+
+    <div class="part">
+      <div class="part-label"><span class="letter">a</span> Smallest number</div>
+      <div class="drop-row">
+        <div class="drop-slot" id="slot-a" data-slot="a"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="part">
+      <div class="part-label"><span class="letter">b</span> Greatest number</div>
+      <div class="drop-row">
+        <div class="drop-slot" id="slot-b" data-slot="b"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="part">
+      <div class="part-label"><span class="letter">c</span> Arrange in order — begin with the <span id="order-dir-label" style="color:var(--purple-dark);">smallest</span></div>
+      <div class="drop-row" id="order-row"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-check" id="check-btn" onclick="checkAnswers()">Check answers</button>
+      <button class="btn btn-next" id="next-btn" onclick="nextRound()">Next round ›</button>
+      <button class="btn btn-retry" id="retry-btn" onclick="retryRound()">Try again</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</div>
+
+<script>
+const ROUNDS = [
+  {nums:[20,10,15],dir:'smallest'},
+  {nums:[11,10,16,18],dir:'greatest'},
+  {nums:[12,7,19,3],dir:'smallest'},
+  {nums:[25,14,30,8],dir:'greatest'},
+  {nums:[6,13,9,17,4],dir:'smallest'},
+  {nums:[50,35,42,27],dir:'greatest'},
+  {nums:[100,75,88,60],dir:'smallest'},
+  {nums:[33,21,45,12,38],dir:'greatest'},
+];
+
+let round = 0, currentNums = [], currentDir = '', dragSrc = null;
+const slots = { a: null, b: null, order: [] };
+
+function shuffle(a) { return a.slice().sort(() => Math.random() - .5); }
+
+function makeRemoveBtn(cb) {
+  const btn = document.createElement('button');
+  btn.className = 'remove-btn';
+  btn.textContent = '×';
+  btn.addEventListener('click', cb);
+  return btn;
+}
+
+function initRound() {
+  const base = ROUNDS[round % ROUNDS.length];
+  let nums = base.nums.slice();
+  if (round >= ROUNDS.length) {
+    const off = Math.floor(round / ROUNDS.length) * 5;
+    nums = nums.map(n => Math.min(199, n + off));
+  }
+  currentNums = nums;
+  currentDir = base.dir;
+  slots.a = null; slots.b = null; slots.order = Array(nums.length).fill(null);
+
+  document.getElementById('progress-label').textContent = `Round ${round + 1} of ${ROUNDS.length}`;
+  document.getElementById('progress-fill').style.width = `${((round + 1) / ROUNDS.length) * 100}%`;
+  document.getElementById('order-dir-label').textContent = currentDir;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('retry-btn').style.display = 'none';
+  document.getElementById('check-btn').style.display = 'inline-block';
+
+  // Bank
+  const bank = document.getElementById('number-bank');
+  bank.innerHTML = '';
+  shuffle(currentNums).forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'num-card';
+    el.textContent = n;
+    el.draggable = true;
+    el.dataset.val = n;
+    el.id = 'card-' + n;
+    el.addEventListener('dragstart', onDragStart);
+    el.addEventListener('dragend', onDragEnd);
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    bank.appendChild(el);
+  });
+
+  // Slots a, b
+  ['a', 'b'].forEach(s => {
+    const sl = document.getElementById('slot-' + s);
+    sl.innerHTML = '';
+    sl.className = 'drop-slot';
+    delete sl.dataset.val;
+    attachDrop(sl);
+    sl.appendChild(makeRemoveBtn(() => clearSlot(s)));
+  });
+
+  // Order row
+  const row = document.getElementById('order-row');
+  row.innerHTML = '';
+  currentNums.forEach((_, i) => {
+    const sl = document.createElement('div');
+    sl.className = 'drop-slot';
+    sl.dataset.slot = 'o' + i;
+    attachDrop(sl);
+    sl.appendChild(makeRemoveBtn(() => clearOrderSlot(i)));
+    row.appendChild(sl);
+    if (i < currentNums.length - 1) {
+      const comma = document.createElement('span');
+      comma.className = 'comma'; comma.textContent = ',';
+      row.appendChild(comma);
+    }
+  });
+
+}
+
+function attachDrop(el) {
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('over'));
+  el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('over'); dropOn(el); });
+}
+
+function onDragStart(e) {
+  dragSrc = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragEnd() { this.classList.remove('dragging'); dragSrc = null; }
+
+function dropOn(target) {
+  if (!dragSrc) return;
+  const val = parseInt(dragSrc.dataset.val);
+  dragSrc = null;
+  const slotId = target.dataset.slot;
+  if (slotId === 'a' || slotId === 'b') {
+    const prev = slots[slotId];
+    if (prev !== null) returnCard(prev);
+    slots[slotId] = val;
+    fillSlot(target, val, () => clearSlot(slotId));
+    markUsed(val);
+  } else if (slotId && slotId.startsWith('o')) {
+    const i = parseInt(slotId.slice(1));
+    const prev = slots.order[i];
+    if (prev !== null) returnCard(prev);
+    slots.order[i] = val;
+    fillSlot(target, val, () => clearOrderSlot(i));
+    markUsed(val);
+  }
+}
+
+function fillSlot(sl, val, onRemove) {
+  sl.innerHTML = '';
+  sl.dataset.val = val;
+  const span = document.createElement('span');
+  span.textContent = val;
+  sl.appendChild(span);
+  sl.appendChild(makeRemoveBtn(onRemove));
+}
+
+function countUsages(val) {
+  let count = 0;
+  if (slots.a === val) count++;
+  if (slots.b === val) count++;
+  slots.order.forEach(v => { if (v === val) count++; });
+  return count;
+}
+
+function updateCardState(val) {
+  const el = document.getElementById('card-' + val);
+  if (!el) return;
+  const usages = countUsages(val);
+  if (usages >= 1) {
+    el.classList.add('used');
+  } else {
+    el.style.opacity = '';
+    el.classList.remove('used');
+  }
+}
+
+function markUsed(val) {
+  updateCardState(val);
+}
+
+function returnCard(val) {
+  const el = document.getElementById('card-' + val);
+  if (el) {
+    el.removeEventListener('dragstart', onDragStart);
+    el.removeEventListener('dragend', onDragEnd);
+    el.removeEventListener('touchstart', onTouchStart);
+    el.addEventListener('dragstart', onDragStart);
+    el.addEventListener('dragend', onDragEnd);
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.draggable = true;
+  }
+  updateCardState(val);
+}
+
+function clearSlot(s) {
+  const v = slots[s];
+  if (v !== null) { returnCard(v); slots[s] = null; }
+  const sl = document.getElementById('slot-' + s);
+  sl.innerHTML = ''; sl.className = 'drop-slot';
+  delete sl.dataset.val;
+  attachDrop(sl);
+  sl.appendChild(makeRemoveBtn(() => clearSlot(s)));
+}
+
+function clearOrderSlot(i) {
+  const v = slots.order[i];
+  if (v !== null) { returnCard(v); slots.order[i] = null; }
+  const row = document.getElementById('order-row');
+  const sls = row.querySelectorAll('.drop-slot');
+  const sl = sls[i];
+  sl.innerHTML = ''; sl.className = 'drop-slot';
+  delete sl.dataset.val;
+  attachDrop(sl);
+  sl.appendChild(makeRemoveBtn(() => clearOrderSlot(i)));
+}
+
+function checkAnswers() {
+  const sorted = [...currentNums].sort((a, b) => a - b);
+  const min = sorted[0], max = sorted[sorted.length - 1];
+  const correctOrder = currentDir === 'smallest' ? sorted : [...sorted].reverse();
+
+  let allOk = true;
+
+  const sa = document.getElementById('slot-a');
+  sa.className = 'drop-slot ' + (slots.a === min ? 'correct' : 'wrong');
+  if (slots.a !== min) allOk = false;
+
+  const sb = document.getElementById('slot-b');
+  sb.className = 'drop-slot ' + (slots.b === max ? 'correct' : 'wrong');
+  if (slots.b !== max) allOk = false;
+
+  const row = document.getElementById('order-row');
+  row.querySelectorAll('.drop-slot').forEach((sl, i) => {
+    sl.className = 'drop-slot ' + (slots.order[i] === correctOrder[i] ? 'correct' : 'wrong');
+    if (slots.order[i] !== correctOrder[i]) allOk = false;
+  });
+
+  const fb = document.getElementById('feedback');
+  if (allOk) {
+    fb.innerHTML = '<span class="stars">⭐⭐⭐</span> Well done! All correct!';
+    fb.className = 'feedback ok';
+    document.getElementById('next-btn').style.display = 'inline-block';
+    document.getElementById('retry-btn').style.display = 'none';
+    document.getElementById('check-btn').style.display = 'none';
+    if (round + 1 >= ROUNDS.length) {
+      document.getElementById('next-btn').textContent = 'See my score \u203a';
+    }
+  } else {
+    fb.textContent = 'Some answers need fixing. Try again!';
+    fb.className = 'feedback err';
+    document.getElementById('retry-btn').style.display = 'inline-block';
+    document.getElementById('check-btn').style.display = 'inline-block';
+  }
+}
+
+function retryRound() {
+  document.getElementById('retry-btn').style.display = 'none';
+  document.getElementById('check-btn').style.display = 'inline-block';
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = 'feedback';
+
+  ['a','b'].forEach(s => {
+    const sl = document.getElementById('slot-' + s);
+    if (sl.classList.contains('wrong')) {
+      if (slots[s] !== null) { returnCard(slots[s]); slots[s] = null; }
+      sl.innerHTML = ''; sl.className = 'drop-slot';
+      delete sl.dataset.val;
+      attachDrop(sl);
+      sl.appendChild(makeRemoveBtn(() => clearSlot(s)));
+    } else {
+      sl.className = 'drop-slot';
+    }
+  });
+
+  const row = document.getElementById('order-row');
+  row.querySelectorAll('.drop-slot').forEach((sl, i) => {
+    if (sl.classList.contains('wrong')) {
+      if (slots.order[i] !== null) { returnCard(slots.order[i]); slots.order[i] = null; }
+      sl.innerHTML = ''; sl.className = 'drop-slot';
+      delete sl.dataset.val;
+      const idx = i;
+      attachDrop(sl);
+      sl.appendChild(makeRemoveBtn(() => clearOrderSlot(idx)));
+    } else {
+      sl.className = 'drop-slot';
+    }
+  });
+}
+
+function nextRound() {
+  round++;
+  if (round >= ROUNDS.length) {
+    showScore();
+  } else {
+    initRound();
+  }
+}
+
+function showScore() {
+  document.getElementById('main-card').innerHTML = `
+    <div class="score-card">
+      <div style="font-size:48px;margin-bottom:.5rem;">🏆</div>
+      <div class="big-num">${ROUNDS.length}/${ROUNDS.length}</div>
+      <div class="sub">Rounds completed — amazing work!</div>
+      <button class="restart-btn" onclick="restartGame()">Play again</button>
+    </div>
+  `;
+}
+
+function restartGame() {
+  round = 0;
+  document.getElementById('main-card').innerHTML = `
+    <div class="section-label">Your numbers</div>
+    <div class="number-bank" id="number-bank"></div>
+    <div class="part">
+      <div class="part-label"><span class="letter">a</span> Smallest number</div>
+      <div class="drop-row"><div class="drop-slot" id="slot-a" data-slot="a"></div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="part">
+      <div class="part-label"><span class="letter">b</span> Greatest number</div>
+      <div class="drop-row"><div class="drop-slot" id="slot-b" data-slot="b"></div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="part">
+      <div class="part-label"><span class="letter">c</span> Arrange in order — begin with the <span id="order-dir-label" style="color:var(--purple-dark);">smallest</span></div>
+      <div class="drop-row" id="order-row"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-check" id="check-btn" onclick="checkAnswers()">Check answers</button>
+      <button class="btn btn-next" id="next-btn" onclick="nextRound()">Next round ›</button>
+      <button class="btn btn-retry" id="retry-btn" onclick="retryRound()">Try again</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+  `;
+  initRound();
+}
+
+// Touch drag support
+let touchCard = null, ghost = null;
+function onTouchStart(e) {
+  touchCard = this;
+  const t = e.touches[0];
+  ghost = document.createElement('div');
+  ghost.textContent = touchCard.textContent;
+  ghost.style.cssText = `position:fixed;pointer-events:none;opacity:.8;z-index:9999;width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;font-family:'Nunito',sans-serif;background:#EEEDFE;border:2px solid #AFA9EC;border-radius:14px;color:#3C3489;`;
+  ghost.style.left = (t.clientX - 29) + 'px';
+  ghost.style.top = (t.clientY - 29) + 'px';
+  document.body.appendChild(ghost);
+  document.addEventListener('touchmove', onTouchMove, { passive: false });
+  document.addEventListener('touchend', onTouchEnd);
+  e.preventDefault();
+}
+function onTouchMove(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  ghost.style.left = (t.clientX - 29) + 'px';
+  ghost.style.top = (t.clientY - 29) + 'px';
+}
+function onTouchEnd(e) {
+  document.removeEventListener('touchmove', onTouchMove);
+  document.removeEventListener('touchend', onTouchEnd);
+  if (ghost) { ghost.remove(); ghost = null; }
+  if (!touchCard) return;
+  const t = e.changedTouches[0];
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const slot = el?.closest?.('.drop-slot');
+  if (slot) { dragSrc = touchCard; dropOn(slot); }
+  touchCard = null;
+}
+
+initRound();
+</script>
+</body>
+</html>
